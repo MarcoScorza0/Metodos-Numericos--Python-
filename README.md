@@ -1,2 +1,14 @@
 # A Custom library of numerical methods
-A custom library of numerical methods implemented from scratch for study and practice.
+
+## FEATURES
+
+### LINEAR ALGEBRA:
+- Jacobi's method for Linear equation systems.
+- Spectral radius calculation
+
+### GENERAL UTILITIES:
+- Square matrix validations.
+- Array dimension validation for matrix conversion.
+- Vector to matrix conversion.
+      
+    
