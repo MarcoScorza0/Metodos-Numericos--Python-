@@ -1,2 +1,2 @@
-# Biblioteca propia
-Librería de funciones propias para aplicaciones de cálculo numérico
+# Custom library of numerical methods
+Library of custom functions for study and practice.
