@@ -12,6 +12,8 @@ def vector_to_matrix(data,rows,columns): #Receives an array and converts it into
         return matrix #Returns the matrix reshaped.
 
 
+
+
 #MATRIX VALIDATION FUNCTION.
 def matrix_validation(matrix):
     matrix=np.asarray(matrix,dtype=float)
@@ -19,6 +21,9 @@ def matrix_validation(matrix):
         raise ValueError(f"Error: invalid matrix")
     else:
         return matrix
+
+
+
 
 #SQUARE MATRIX VALIDATION
 def sqr_matrix_validation(matrix):
@@ -35,6 +40,8 @@ def sqr_matrix_validation(matrix):
         raise ValueError(f"Error: Matrix is not a square matrix.")
     else:
         return matrix
+
+
 
 
 #SPECTRAL_RADIUS_Function.
@@ -69,9 +76,6 @@ def jacobi(principal_matrix,independent_terms_matrix,initial_vector,max_iteratio
         else:
             principal_matrix=vector_to_matrix(principal_matrix,int(order),int(order))
     
-            
-
-
     #4. Verifies dimensions of every given matrix.
     rows_A, cols_A = principal_matrix.shape   #Gives the corresponding dimensions to matrix A.
     rows_b, cols_b = independent_terms_matrix.shape  #Same for matrix b.
@@ -79,7 +83,6 @@ def jacobi(principal_matrix,independent_terms_matrix,initial_vector,max_iteratio
     if rows_A != cols_A or rows_b != rows_A or cols_b != 1 or rows_x0 != rows_A or cols_x0 != 1:  #Verifies dimensions of every given matrix.
         raise ValueError(f"Incorrect dimensions: principal_matrix must be of dimensions ({rows_A}, {rows_A}), and vectors must be of dimensions ({rows_A}, 1).") #Indicates error if dimensions don't match.
   
-    
     #5. Verifies necessary conditions before applying Jacobi's method.
     if np.any(np.diag(principal_matrix)==0): #Method cant be used if the main diagonal contains zero in it.
         raise ValueError(f"Jacobi's method can't be used. The matrix D can't be inverted.") #Indicates an error if the previous verification fails.
@@ -88,10 +91,12 @@ def jacobi(principal_matrix,independent_terms_matrix,initial_vector,max_iteratio
     U=-np.triu(principal_matrix)+D  #Extracts upper matrix.
     D_inv=np.linalg.inv(D)  #Inverts the D matrix.
     
-
-    #6. Proceeds with iterative method and verifications.
+    #6. Proceeds with iterative method and verifications (including convergence criteria).
     TJ=D_inv @ (L+U)   #Calculates TJ matrix.
     CJ=D_inv @ independent_terms_matrix  #Same for CJ matrix.
+    rho=spectral_radius(TJ) #Calculates spectral radius of TJ matrix    
+    if rho>=1: #Checks spectral radius for ensuring convergence.
+        raise ValueError(f"Error: The method will not converge because of spectral radius criteria. Can not use Jacobi's method.")
     matrix_k=initial_vector  #Defines first k-th matrix as the initial vector.
     k=0 #Sets iteration counter.
     infinite_norm=float('inf') #Initializes infinite_norm as float('inf') to ensure the norm condition is satisfied.
@@ -104,14 +109,11 @@ def jacobi(principal_matrix,independent_terms_matrix,initial_vector,max_iteratio
             print(f"Jacobi's method has DIVERGED (values turned infinite/nan in iteration {k})") #Indicates divergence error.
             return None,k,infinite_norm #Returns none, and extra data from last iteration. Also stops iterations.
 
-
     #7. Final check for different scenarios.
     if(k==max_iterations): #Checks if maximum number of iterations have been reached.
         print(f"Too many iterations. Jacobi's method did not converge. Maximum iterations have been reached ({k})") #Indicates error for max iterations reached.
         return None,k,infinite_norm #Returns none and extra data from last iteration.
     print(f"Jacobi's method CONVERGED successfully: \nx=\n{matrix_xnew}\nITERATIONS={k}\nERROR IN NORM=\n\t{infinite_norm}") #Indicates method converged successfully.
     
-    
-    
-    return matrix_xnew,k,infinite_norm  #Returns final k-th matrix of unknowns, and some extra data from last iteration.
+    return matrix_xnew,k,infinite_norm,rho  #Returns final k-th matrix of unknowns, and some extra data from last iteration.
 
