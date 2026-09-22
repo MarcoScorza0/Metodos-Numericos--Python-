@@ -2,60 +2,60 @@ import numpy as np
 
 
 
-#VECTOR A MATRIZ
-def vector_a_matriz(datos,filas,columnas):
-    vector=np.array(datos,dtype=float)
-    if len(vector)!=filas*columnas:
-        raise ValueError(f"Error: La cantidad de datos del arreglo ({len(vector)}) no coincide con el orden indicado de la matriz ({filas*columnas})")
+#VECTOR TO MATRIX FUNCTION.
+def vector_to_matrix(data,rows,columns): #Receives an array and converts it into a matrix of n rows and m columns ("filas" and "columnas")
+    vector=np.array(data,dtype=float)  #Defines a numpy array called "vector" and makes it a float array.
+    if len(vector)!=rows*columns:  #Verifies the quantity of values inserted in the vector correlates with the dimensions of the matrix indicated
+        raise ValueError(f"Error: The number of elements in the vector ({len(vector)}) does not match the order of the matrix ({rows*columns}).") #if doesnt match, it sends an error.
     else:
-        matriz=vector.reshape((filas,columnas))
-        return matriz
+        matrix=vector.reshape((rows,columns)) #Gives the array the shape in correspondence with the matrix´s dimension.
+        return matrix #Returns the matrix reshaped.
 
 
 
 
-#METODO DE JACOBI
-def jacobi(matriz_principal,matriz_term_independientes,matriz_inicial,max_iteraciones,tolerancia):
-    if np.any(np.diag(matriz_principal)==0):
-        raise ValueError(f"El metodo de jacobi no puede ser utilizado. La matriz D no es invertible.")
-    D=np.diag(np.diag(matriz_principal))
-    L=-np.tril(matriz_principal)+D
-    U=-np.triu(matriz_principal)+D
+#JACOBI's method function
+def jacobi(principal_matrix,independent_terms_matrix,initial_vector,max_iterations,tolerance):
+    if np.any(np.diag(principal_matrix)==0):
+        raise ValueError(f"Jacobi's method can't be used. The matrix D can't be inverted.")
+    D=np.diag(np.diag(principal_matrix))
+    L=-np.tril(principal_matrix)+D
+    U=-np.triu(principal_matrix)+D
     D_inv=np.linalg.inv(D)
     
-    filas_A, cols_A = matriz_principal.shape
-    filas_b, cols_b = matriz_term_independientes.shape
-    filas_x0, cols_x0 = matriz_inicial.shape
-    if filas_A != cols_A or filas_b != filas_A or cols_b != 1 or filas_x0 != filas_A or cols_x0 != 1:
-        raise ValueError(f"Dimensiones incorrectas: matriz_principal debe ser ({filas_A}, {filas_A}), y los vectores ({filas_A}, 1).")
+    rows_A, cols_A = principal_matrix.shape
+    rows_b, cols_b = independent_terms_matrix.shape
+    rows_x0, cols_x0 = initial_vector.shape
+    if rows_A != cols_A or rows_b != rows_A or cols_b != 1 or rows_x0 != rows_A or cols_x0 != 1:
+        raise ValueError(f"Incorrect dimensions: principal_matrix must be of dimensions ({rows_A}, {rows_A}), and vectors must be of dimensions ({rows_A}, 1).")
 
 
 
 
 
     TJ=D_inv @ (L+U)
-    CJ=D_inv @ matriz_term_independientes
-    matrizk=matriz_inicial
+    CJ=D_inv @ independent_terms_matrix
+    matrix_k=initial_vector
     k=0
-    norma_infinito=float('inf')
-    while k<max_iteraciones and norma_infinito>tolerancia:
-        matriz_xnew=TJ @ matrizk + CJ
+    infinite_norm=float('inf')
+    while k<max_iterations and infinite_norm>tolerance:
+        matrix_xnew=TJ @ matrix_k + CJ
         k=k+1
-        norma_infinito=np.max(np.abs(matriz_xnew - matrizk))
-        matrizk=matriz_xnew
-        if np.isnan(norma_infinito) or np.isinf(norma_infinito):
-            print(f"El método de Jacobi DIVERGIÓ (los valores se fueron a infinito/nan en la iteración {k})")
-            return None,k,norma_infinito
+        infinite_norm=np.max(np.abs(matrix_xnew - matrix_k))
+        matrix_k=matrix_xnew
+        if np.isnan(infinite_norm) or np.isinf(infinite_norm):
+            print(f"Jacobi's method has DIVERGED (values turned infinite/nan in iteration {k})")
+            return None,k,infinite_norm
 
     
 
-    if(k==max_iteraciones):
-        print(f"El metodo de jacobi no convergio. Se alcanzo el maximo de iteraciones ({k})")
-        return None,k,norma_infinito
-    print(f"El metodo convergió: \nx=\n{matriz_xnew}\nITERACIONES={k}\nERROR EN NORMA=\n\t{norma_infinito}")
+    if(k==max_iterations):
+        print(f"Too many iterations. Jacobi's method did not converge. Maximum iterations have been reached ({k})")
+        return None,k,infinite_norm
+    print(f"Jacobi's method CONVERGED successfully: \nx=\n{matrix_xnew}\nITERATIONS={k}\nERROR IN NORM=\n\t{infinite_norm}")
 
 
 
 
-    return matriz_xnew,k,norma_infinito
+    return matrix_xnew,k,infinite_norm
 
