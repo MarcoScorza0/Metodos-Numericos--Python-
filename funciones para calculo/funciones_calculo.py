@@ -18,7 +18,7 @@ def vector_to_matrix(data,rows,columns): #Receives an array and converts it into
 # NOTE: Inputs for this function can be NumPy arrays or Python lists. The "vector_to_matrix" function can be used for this purpose if necessary.
 def jacobi(principal_matrix,independent_terms_matrix,initial_vector,max_iterations,tolerance):  #approximates a linear system Ax=b using Jacobi's iterative method.
   
-    # 1. Converts inputs to numpy arrays.
+    #1. Converts inputs to numpy arrays.
     principal_matrix = np.asarray(principal_matrix, dtype=float)  #Converts principal_matrix to a numpy array.
     independent_terms_matrix = np.asarray(independent_terms_matrix, dtype=float)  #Converts independent_terms_matrix to a numpy array.
     initial_vector = np.asarray(initial_vector, dtype=float)  #Converts initial_vector to a numpy array.
@@ -29,9 +29,18 @@ def jacobi(principal_matrix,independent_terms_matrix,initial_vector,max_iteratio
     if initial_vector.ndim == 1:
         initial_vector = initial_vector.reshape(-1, 1) #Converts 1D array to column array.
 
+    #3. Verifies and converts (if necessary) 'principal_matrix' vector into matrix
+    if principal_matrix.ndim==1: #Verifies if principal_matrix is a 1D array. In that case, must be converted into a nxn matrix.
+        order=np.sqrt(len(principal_matrix)) #Calculates the root square for the number of elements in that array.
+        if order!=int(order):  #Verifies
+            raise ValueError(f"Error: The number of elements in 'principal_matrix' must have a perfect square root.")
+        else:
+            principal_matrix=vector_to_matrix(principal_matrix,int(order),int(order))
+    
+            
 
 
-    #3. Verifies dimensions of every given matrix.
+    #4. Verifies dimensions of every given matrix.
     rows_A, cols_A = principal_matrix.shape   #Gives the corresponding dimensions to matrix A.
     rows_b, cols_b = independent_terms_matrix.shape  #Same for matrix b.
     rows_x0, cols_x0 = initial_vector.shape #Same for initial_vector.
@@ -39,7 +48,7 @@ def jacobi(principal_matrix,independent_terms_matrix,initial_vector,max_iteratio
         raise ValueError(f"Incorrect dimensions: principal_matrix must be of dimensions ({rows_A}, {rows_A}), and vectors must be of dimensions ({rows_A}, 1).") #Indicates error if dimensions don't match.
   
     
-    #4. Verifies necessary conditions before applying Jacobi's method.
+    #5. Verifies necessary conditions before applying Jacobi's method.
     if np.any(np.diag(principal_matrix)==0): #Method cant be used if the main diagonal contains zero in it.
         raise ValueError(f"Jacobi's method can't be used. The matrix D can't be inverted.") #Indicates an error if the previous verification fails.
     D=np.diag(np.diag(principal_matrix))  #Extracts diagonal matrix.
@@ -48,7 +57,7 @@ def jacobi(principal_matrix,independent_terms_matrix,initial_vector,max_iteratio
     D_inv=np.linalg.inv(D)  #Inverts the D matrix.
     
 
-    #5. Proceeds with iterative method and verifications.
+    #6. Proceeds with iterative method and verifications.
     TJ=D_inv @ (L+U)   #Calculates TJ matrix.
     CJ=D_inv @ independent_terms_matrix  #Same for CJ matrix.
     matrix_k=initial_vector  #Defines first k-th matrix as the initial vector.
@@ -64,7 +73,7 @@ def jacobi(principal_matrix,independent_terms_matrix,initial_vector,max_iteratio
             return None,k,infinite_norm #Returns none, and extra data from last iteration. Also stops iterations.
 
 
-    #6. Final check for different scenarios.
+    #7. Final check for different scenarios.
     if(k==max_iterations): #Checks if maximum number of iterations have been reached.
         print(f"Too many iterations. Jacobi's method did not converge. Maximum iterations have been reached ({k})") #Indicates error for max iterations reached.
         return None,k,infinite_norm #Returns none and extra data from last iteration.
