@@ -12,6 +12,38 @@ def vector_to_matrix(data,rows,columns): #Receives an array and converts it into
         return matrix #Returns the matrix reshaped.
 
 
+#MATRIX VALIDATION FUNCTION.
+def matrix_validation(matrix):
+    matrix=np.asarray(matrix,dtype=float)
+    if matrix.ndim>2 or matrix.ndim==0 or len(matrix)==0:
+        raise ValueError(f"Error: invalid matrix")
+    else:
+        return matrix
+
+#SQUARE MATRIX VALIDATION
+def sqr_matrix_validation(matrix):
+    matrix=matrix_validation(matrix)
+    if matrix.ndim==1:
+        order=np.sqrt(len(matrix))
+        if order!=int(order):
+            raise ValueError(f"Error: The number of elements in the matrix must have a perfect square root. Must introduce a square matrix")
+        else:
+            order=int(order)
+            matrix=vector_to_matrix(matrix,order,order)
+    rows,columns=matrix.shape
+    if rows!=columns:
+        raise ValueError(f"Error: Matrix is not a square matrix.")
+    else:
+        return matrix
+
+
+#SPECTRAL_RADIUS_Function.
+def spectral_radius(matrix):
+    matrix=sqr_matrix_validation(matrix)
+    eigenvalues=np.linalg.eigvals(matrix)
+    return np.max(np.abs(eigenvalues))
+
+
 
 
 #JACOBI's method function
