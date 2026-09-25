@@ -1,4 +1,5 @@
 import numpy as np
+import sympy as sp 
 
 ##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -180,3 +181,92 @@ def gauss_seidel(principal_matrix,independent_terms_matrix,initial_vector,max_it
     return x,k,infinite_norm,spec_radius  #Returns vector of unknowns, number of iterations, error in norm and spectral radius
 
 ##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+##NEWTON-RAPHSON'S method
+def newton_raphson(function,x0,tolerance,max_iterations,a,b):
+    '''
+    Introduce 'function' argument as a symbolic expression based on sympy library.
+
+     Fourier criteria for ensuring convergence of continuous functions on [a,b]:
+        #1 f(a)*f(b) < 0
+        #2 f'(x) != 0 for all x on [a,b]
+        #3 f''(x) != 0 for all x on [a,b]
+        #4 f(x0)*f''(x0) > 0
+    For this tests, it is necessary to discretize the interval [a,b] in order to apply the criteria.
+    If the criteria is not met, cannot ensure convergence.
+
+    '''
+
+    x=sp.Symbol('x') #Defines x as a symbolic variable.
+    f_def=sp.lambdify(x,function,'numpy') #converts the symbolic function to a numpy function.
+    fprime_def=sp.lambdify(x,sp.diff(function,x,1),'numpy') #Finds the derivative of 'function'
+    f_secprime_def=sp.lambdify(x,sp.diff(function,x,2),'numpy')#Same for second derivative (needed for convergence criteria).
+    disc_interval=np.linspace(a,b,100000) #Discretize the interval [a,b]
+
+    #1. First criterion from Fourier:
+    if (f_def(a)*f_def(b))<0:
+        criteria_1=1 # if 1, then it is satisfied
+    else:
+        if f_def(a)==0 or f_def(b)==0:
+            raise ValueError ("One of the boundaries of the interval is indeed a root")
+        else:
+            criteria_1=0 # if 0, then it is not satisfied
+
+    #2 Second criterion from Fourier:
+    first_derivative_array=fprime_def(disc_interval) #calculates the derivative of every element of the discrete interval
+    if np.any((first_derivative_array[:-1]*first_derivative_array[1:])<0):
+        '''
+        Multiplies every N-th element of the first-derivative discrete array for the (N+1)-th element.
+        If any product is less than 0, this means that, by Bolzano, between both discrete elements there's a root.
+        In this case, the criteria is not met.
+        '''
+        criteria_2=0
+    else:
+        criteria_2=1
+
+    #3 Third criterion from Fourier:
+        #Exactly the same procedure as step #2 applied on second derivative.
+    second_derivative_array=f_secprime_def(disc_interval)
+    if np.any((second_derivative_array[:-1]*second_derivative_array[1:]) < 0):
+        criteria_3=0
+    else:
+        criteria_3=1
+
+    #4 Fourth criterion from Fourier:
+    if f_def(x0)*f_secprime_def(x0)>0:
+        criteria_4=1
+    else:
+        criteria_4=0
+
+
+    if criteria_1==1 and criteria_2==1 and criteria_3==1 and criteria_4==1:
+        print("\033[96m\n\n\t\t\tFourier criteria are satisfied. Convergence is ensured\n\n\033[0m")
+    else:
+        print("\033[91m\n\n\t\t\tFourier criteria are not satisfied. Convergence is not ensured\n\n\033[0m")
+
+
+
+    print("\n\n\n\033[32mStarting iteration:\n\n\033[0m")
+    k=0
+    xold=x0
+    error=float('inf')
+    while tolerance<error and k<max_iterations:
+        xnew=xold-f_def(xold)/fprime_def(xold)
+        error=abs(xnew-xold)
+        xold=xnew
+        k=k+1
+    if k==max_iterations:
+        print("\033[31m\n\n\t\t\tMaximum number of iterations reached\n\n\033[0m")
+    else:
+        print("\033[32m\n\n\t\t\tIndicated tolerance has been reached\n\n\033[0m")
+        print(f"\n\n\n\033[32m\t\t\tThe root is: {xnew}\033[0m")
+        print(f"\n\n\n\033[32m\t\t\tNumber of iterations: {k}\033[0m")
+        print(f"\n\n\n\033[32m\t\t\tError: {error}\033[0m")
+
+    return xnew,k,error
+    
+
+    
