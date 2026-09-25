@@ -5,6 +5,8 @@
 ### LINEAR ALGEBRA:
 - Jacobi's method for linear equation systems.
 - Gauss-Seidel's method for linear equation systems.
+### ROOTS:
+- Newton-Raphson's method for finding roots of a univariable function.
 ### GENERAL UTILITIES:
 - Square matrix validations.
 - Array dimension validation for matrix conversion.
