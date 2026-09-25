@@ -1,6 +1,6 @@
 import numpy as np
 
-
+##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #VECTOR TO MATRIX FUNCTION.
 def vector_to_matrix(data,rows,columns): #Receives an array and converts it into a matrix of n rows and m columns ("filas" and "columnas")
@@ -12,7 +12,7 @@ def vector_to_matrix(data,rows,columns): #Receives an array and converts it into
         return matrix #Returns the matrix reshaped.
 
 
-
+##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #MATRIX VALIDATION FUNCTION.
 def matrix_validation(matrix):
@@ -23,7 +23,7 @@ def matrix_validation(matrix):
         return matrix
 
 
-
+##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #SQUARE MATRIX VALIDATION
 def sqr_matrix_validation(matrix):
@@ -42,7 +42,7 @@ def sqr_matrix_validation(matrix):
         return matrix
 
 
-
+##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #SPECTRAL_RADIUS_Function.
 def spectral_radius(matrix):
@@ -51,7 +51,7 @@ def spectral_radius(matrix):
     return np.max(np.abs(eigenvalues))
 
 
-
+##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #JACOBI's method function
 # NOTE: Inputs for this function can be NumPy arrays or Python lists. The "vector_to_matrix" function can be used for this purpose if necessary.
@@ -117,3 +117,66 @@ def jacobi(principal_matrix,independent_terms_matrix,initial_vector,max_iteratio
     
     return matrix_xnew,k,infinite_norm,rho  #Returns final k-th matrix of unknowns, and some extra data from last iteration.
 
+
+##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+## Gauss-Seidel's method function
+def gauss_seidel(principal_matrix,independent_terms_matrix,initial_vector,max_iterations,tolerance):
+
+    #1. Converts inputs to numpy arrays.
+    principal_matrix = np.asarray(principal_matrix, dtype=float)  #Converts principal_matrix to a numpy array.
+    independent_terms_matrix = np.asarray(independent_terms_matrix, dtype=float)  #Converts independent_terms_matrix to a numpy array.
+    initial_vector = np.asarray(initial_vector, dtype=float)  #Converts initial_vector to a numpy array.
+
+    #2. Converts 1D vectors to column vectors.
+    if independent_terms_matrix.ndim == 1:
+        independent_terms_matrix = independent_terms_matrix.reshape(-1, 1) #Converts 1D array to column array.
+    if initial_vector.ndim == 1:
+        initial_vector = initial_vector.reshape(-1, 1) #Converts 1D array to column array.
+
+    #3. Verifies and converts (if necessary) 'principal_matrix' vector into matrix
+    if principal_matrix.ndim==1: #Verifies if principal_matrix is a 1D array. In that case, must be converted into a nxn matrix.
+        order=np.sqrt(len(principal_matrix)) #Calculates the root square for the number of elements in that array.
+        if order!=int(order):  #Verifies
+            raise ValueError(f"Error: The number of elements in 'principal_matrix' must have a perfect square root.")
+        else:
+            principal_matrix=vector_to_matrix(principal_matrix,int(order),int(order))
+    
+    #4. Verifies dimensions of every given matrix.
+    rows_A, cols_A = principal_matrix.shape   #Extracts the number of rows and columns of the principal matrix to the variables rows_A and cols_A
+    rows_b, cols_b = independent_terms_matrix.shape  #Same for matrix b.
+    rows_x0, cols_x0 = initial_vector.shape #Same for initial_vector.
+    if rows_A != cols_A or rows_b != rows_A or cols_b != 1 or rows_x0 != rows_A or cols_x0 != 1:  #Verifies dimensions of every given matrix.
+        raise ValueError(f"Incorrect dimensions on the matrix's system).") #Indicates error if dimensions don't match.
+  
+    #5. Verifies necessary conditions before applying Gauss-Seidel's method.
+    if np.any(np.diag(principal_matrix)==0): #Method can't be used if the main diagonal contains zero in it.
+        raise ValueError(f"Gauss-Seidel's method can't be used.") #Indicates an error if the previous verification fails.
+    D=np.diag(np.diag(principal_matrix))  #Extracts diagonal matrix.
+    L=-np.tril(principal_matrix,k=-1)  #Extracts lower matrix.
+    U=-np.triu(principal_matrix,k=1)  #Extracts upper matrix.
+
+    #6 Constructs Tgs to verify convergence with spectral radius criteria.
+        # Given Tgs=(D-L)^(-1)U, to avoid inverting a matrix we can use:
+            # (D-L)^(-1) * U = Tgs so U=(D-L)*Tgs and this linear sistem is easier to solve than inverting a matrix.
+            #The solution to this system is gonna be Tgs matrix, the one we want to use for aplying convergence criteria of spectral radius
+    Tgs = np.linalg.solve((D-L),U)
+    spec_radius = spectral_radius(Tgs)
+    if spec_radius>=1:
+        raise ValueError(f"Error: Method will not converge. Spectral Radius of Tgs is {spec_radius} (must be <1 to converge)")
+
+    #7 Starts iteration (Avoiding usage of matrix Tgs and Cgj, not for any utility reason but for educational ones)
+    infinite_norm=float('inf')
+    k=0
+    x=np.copy(initial_vector)
+    D_vector=np.diag(principal_matrix)
+    while infinite_norm>tolerance and k<max_iterations:
+        xold_copy=np.copy(x)
+        for i in range(rows_A):
+            x[i,0]=(1/(D_vector[i]))*(independent_terms_matrix[i,0]-(sum(principal_matrix[i,j]*x[j,0] for j in range(rows_A) if j != i)))
+        k=k+1
+        infinite_norm=np.max(np.abs(x-xold_copy))
+    return x,k,infinite_norm,spec_radius
+
+##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
