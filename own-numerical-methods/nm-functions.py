@@ -138,10 +138,10 @@ def gauss_seidel(principal_matrix,independent_terms_matrix,initial_vector,max_it
     #3. Verifies and converts (if necessary) 'principal_matrix' vector into matrix
     if principal_matrix.ndim==1: #Verifies if principal_matrix is a 1D array. In that case, must be converted into a nxn matrix.
         order=np.sqrt(len(principal_matrix)) #Calculates the root square for the number of elements in that array.
-        if order!=int(order):  #Verifies
+        if order!=int(order):  #Verifies perfect square.
             raise ValueError(f"Error: The number of elements in 'principal_matrix' must have a perfect square root.")
         else:
-            principal_matrix=vector_to_matrix(principal_matrix,int(order),int(order))
+            principal_matrix=vector_to_matrix(principal_matrix,int(order),int(order)) 
     
     #4. Verifies dimensions of every given matrix.
     rows_A, cols_A = principal_matrix.shape   #Extracts the number of rows and columns of the principal matrix to the variables rows_A and cols_A
@@ -161,22 +161,22 @@ def gauss_seidel(principal_matrix,independent_terms_matrix,initial_vector,max_it
         # Given Tgs=(D-L)^(-1)U, to avoid inverting a matrix we can use:
             # (D-L)^(-1) * U = Tgs so U=(D-L)*Tgs and this linear sistem is easier to solve than inverting a matrix.
             #The solution to this system is gonna be Tgs matrix, the one we want to use for aplying convergence criteria of spectral radius
-    Tgs = np.linalg.solve((D-L),U)
-    spec_radius = spectral_radius(Tgs)
-    if spec_radius>=1:
+    Tgs = np.linalg.solve((D-L),U) #Solves the linear system for finding Tgs matrix.
+    spec_radius = spectral_radius(Tgs) #Calculates the spectral radius of Tgs
+    if spec_radius>=1: #Verifies criteria.
         raise ValueError(f"Error: Method will not converge. Spectral Radius of Tgs is {spec_radius} (must be <1 to converge)")
 
     #7 Starts iteration (Avoiding usage of matrix Tgs and Cgj, not for any utility reason but for educational ones)
-    infinite_norm=float('inf')
-    k=0
-    x=np.copy(initial_vector)
-    D_vector=np.diag(principal_matrix)
-    while infinite_norm>tolerance and k<max_iterations:
-        xold_copy=np.copy(x)
-        for i in range(rows_A):
+    infinite_norm=float('inf') #Initialize infinite_norm to ensure next loop starts.
+    k=0 #Initialize counter for loop.
+    x=np.copy(initial_vector) #Copies unknowns initial vector for usage in first iteration.
+    D_vector=np.diag(principal_matrix)  #Converts the diagonal of principal_matrix into an array for calculation purpose.
+    while infinite_norm>tolerance and k<max_iterations: #Starts iteration.
+        xold_copy=np.copy(x) #Copies x before writing it cause original vector is needed for calculating infinite norm before cycle.
+        for i in range(rows_A): #Calculates every new unknown value using Gauss-Seidel's formula and writes upon the original unknowns vector while calculates every new x value.
             x[i,0]=(1/(D_vector[i]))*(independent_terms_matrix[i,0]-(sum(principal_matrix[i,j]*x[j,0] for j in range(rows_A) if j != i)))
         k=k+1
-        infinite_norm=np.max(np.abs(x-xold_copy))
-    return x,k,infinite_norm,spec_radius
+        infinite_norm=np.max(np.abs(x-xold_copy)) #Calculates error for stop criteria.
+    return x,k,infinite_norm,spec_radius  #Returns vector of unknowns, number of iterations, error in norm and spectral radius
 
 ##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
