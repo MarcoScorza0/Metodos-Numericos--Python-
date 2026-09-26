@@ -7,6 +7,7 @@
 - Gauss-Seidel's method for linear equation systems.
 ### ROOTS:
 - Newton-Raphson's method for finding roots of a univariable function.
+- Newton-Raphson's method animation
 ### GENERAL UTILITIES:
 - Square matrix validations.
 - Array dimension validation for matrix conversion.
