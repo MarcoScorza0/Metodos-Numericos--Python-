@@ -1,6 +1,7 @@
 import numpy as np
 import sympy as sp 
-
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 ##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #VECTOR TO MATRIX FUNCTION.
@@ -186,7 +187,7 @@ def gauss_seidel(principal_matrix,independent_terms_matrix,initial_vector,max_it
 
 
 ##NEWTON-RAPHSON'S method
-def newton_raphson(function,x0,tolerance,max_iterations,a,b):
+def newton_raphson(function,var,x0,tolerance,max_iterations,a,b):
     '''
     Introduce 'function' argument as a symbolic expression based on sympy library.
 
@@ -200,10 +201,9 @@ def newton_raphson(function,x0,tolerance,max_iterations,a,b):
 
     '''
 
-    x=sp.Symbol('x') #Defines x as a symbolic variable.
-    f_def=sp.lambdify(x,function,'numpy') #converts the symbolic function to a numpy function.
-    fprime_def=sp.lambdify(x,sp.diff(function,x,1),'numpy') #Finds the derivative of 'function'
-    f_secprime_def=sp.lambdify(x,sp.diff(function,x,2),'numpy')#Same for second derivative (needed for convergence criteria).
+    f_def=sp.lambdify(var,function,'numpy') #converts the symbolic function to a numpy function.
+    fprime_def=sp.lambdify(var,sp.diff(function,var,1),'numpy') #Finds the derivative of 'function'
+    f_secprime_def=sp.lambdify(var,sp.diff(function,var,2),'numpy')#Same for second derivative (needed for convergence criteria).
     disc_interval=np.linspace(a,b,100000) #Discretize the interval [a,b]
 
     #1. First criterion from Fourier:
@@ -253,8 +253,10 @@ def newton_raphson(function,x0,tolerance,max_iterations,a,b):
     k=0
     xold=x0
     error=float('inf')
+    x_history=[x0]
     while tolerance<error and k<max_iterations:
-        xnew=xold-f_def(xold)/fprime_def(xold)
+        xnew=xold - (f_def(xold)/fprime_def(xold))
+        x_history.append(xnew)
         error=abs(xnew-xold)
         xold=xnew
         k=k+1
@@ -266,7 +268,129 @@ def newton_raphson(function,x0,tolerance,max_iterations,a,b):
         print(f"\n\n\n\033[32m\t\t\tNumber of iterations: {k}\033[0m")
         print(f"\n\n\n\033[32m\t\t\tError: {error}\033[0m")
 
-    return xnew,k,error
+    return xnew,k,error,x_history
     
 
+
+
+# Graph newthon raphson function.
+def graph_newton_raphson(function,var,x0,tolerance,max_iterations,a,b, damping):
+    # We call the pure method just so it calculates and prints the real mathematical results to the console.
+    real_x, real_k, real_error, real_history = newton_raphson(function, var, x0, tolerance, max_iterations, a, b)
+
+    f_def = sp.lambdify(var, function, 'numpy')
+    fprime_def = sp.lambdify(var, sp.diff(function, var, 1), 'numpy')
+    
+    k = 0
+    xold = x0
+    error = float('inf')
+    _x_history = [x0]
+    while tolerance < error and k < max_iterations:
+        xnew = xold - damping * (f_def(xold) / fprime_def(xold))
+        _x_history.append(xnew)
+        error = abs(xnew - xold)
+        xold = xnew
+        k += 1
+        
+    _x_approximation = xnew
+    _iterations = k
+    _error = error
+    
+    #Plot graph config
+    # 1. Configures window and axes
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # 2. Generates points for the function curve
+    # Makes the range wider than [a;b] for better visualization
+    margin = 1.0
+    x_vals = np.linspace(a - margin, b + margin, 400)
+    
+    # Since 'function' is a SymPy symbolic expression, we use lambdify to convert it
+    # into a numeric function that NumPy can evaluate quickly.
+    # (Make sure 'x' is the global symbolic variable defined above)
+    f_numeric = sp.lambdify(var, function, "numpy") #lambdifies 'function' argument.
+    y_vals = f_numeric(x_vals) #gets the y values for every x value in the discretized range of x axis
+    
+    # 3. Sets visualization limits to avoid moving screen
+    initial_xlim = (a - margin, b + margin)
+    y_min, y_max = np.min(y_vals), np.max(y_vals)
+    # Sets a wider range in Y axis for better visualization
+    range_y = y_max - y_min
+    initial_ylim = (y_min - 0.2 * range_y, y_max + 0.2 * range_y)
+    
+    ax.set_xlim(*initial_xlim)
+    ax.set_ylim(*initial_ylim)
+    
+    total_iters = len(_x_history)
+    zoom_threshold = max(2, int(total_iters * 0.3)) # Waits 30% of iterations before zooming
+    
+    min_width = (initial_xlim[1] - initial_xlim[0]) * 0.15 # Maximum zoom limit (15% of original width)
+    min_height = (initial_ylim[1] - initial_ylim[0]) * 0.15
+    
+    # 4. Titles, labels and grid
+    ax.plot(x_vals, y_vals, label="f(x)", color="blue", linewidth=2)
+    ax.axhline(0, color="black", linewidth=1.5)
+    ax.set_title("Newton-Raphson Method", fontsize=14)
+    ax.set_xlabel("x")
+    ax.set_ylabel("f(x)")
+    ax.grid(True, linestyle="--", alpha=0.6)
+    ax.legend()
+
+    
+    curve_dot, = ax.plot([], [], 'ro', markersize=8) 
+    tangent_line, = ax.plot([], [], 'g-', linewidth=1.5) 
+    root_dot, = ax.plot([], [], 'gx', markersize=8) 
+
+    def update(i):
+       
+        actual_x = _x_history[i]
+        actual_y = f_numeric(actual_x)
+        curve_dot.set_data([actual_x], [actual_y])
+        
+        # --- DYNAMIC ZOOM LOGIC ---
+        if i < zoom_threshold:
+            ax.set_xlim(*initial_xlim)
+            ax.set_ylim(*initial_ylim)
+        else:
+            x_final = _x_history[-1]
+            dist_x = abs(actual_x - x_final)
+            dist_y = abs(actual_y - 0)
+            margin_x = max(dist_x * 0.5, min_width / 2)
+            margin_y = max(dist_y * 0.5, min_height / 2)
+            min_x, max_x = min(actual_x, x_final), max(actual_x, x_final)
+            min_y, max_y = min(actual_y, 0), max(actual_y, 0)
+            ax.set_xlim(min_x - margin_x, max_x + margin_x)
+            ax.set_ylim(min_y - margin_y, max_y + margin_y)
+        # -------------------------------
+        
+        if i < len(_x_history) - 1:
+            x_next = _x_history[i + 1]
+            
+            # Extends the tangent line across the entire current view
+            xlims = ax.get_xlim()
+            slope = fprime_def(actual_x)
+            y_start = slope * (xlims[0] - actual_x) + actual_y
+            y_end = slope * (xlims[1] - actual_x) + actual_y
+            
+            tangent_line.set_data([xlims[0], xlims[1]], [y_start, y_end])
+            
+            # The cross should be exactly where the tangent line crosses y=0
+            x_cross = actual_x - (actual_y / slope) if slope != 0 else x_next
+            root_dot.set_data([x_cross], [0])
+        else:
+           
+            tangent_line.set_data([], [])
+            root_dot.set_data([], [])
+            
+        return curve_dot, tangent_line, root_dot
+
+    ani = FuncAnimation(fig, update, frames=len(_x_history), interval=400, repeat=False)
+    plt.show()
+
+
+    return real_x, real_k, real_error, real_history
+
+
+    
+    
     
